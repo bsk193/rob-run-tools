@@ -52,12 +52,31 @@
           <span>Bunker defense +3</span>
           <button class="info" type="button" title="Adds 3 defense to structures in a settlement with a Bunker." aria-label="Bunker defense details">i</button>
         </label>
-        <div class="table-wrap target-table">
-          <table>
-            <thead><tr><th>Structure</th><th class="numeric">Fuse slots</th><th class="numeric"><span title="Defense when empty to defense when all slots have Gold fuses.">Defense</span></th><th class="numeric">Status</th></tr></thead>
-            <tbody id="target-rows"></tbody>
-          </table>
+        <div class="target-summary" aria-live="polite" aria-atomic="true">
+          <div class="target-summary-item"><span>Targets</span><strong id="target-count">0</strong></div>
+          <div class="target-summary-item"><span>Needed · empty</span><strong id="target-min">0</strong></div>
+          <div class="target-summary-item"><span>Needed · full Gold</span><strong id="target-max">0</strong></div>
         </div>
+        <p class="target-plan-status" id="target-status" aria-live="polite">Add targets to build your raid list.</p>
+        <div class="target-section">
+          <div class="section-title"><h2>Target list</h2><span class="live-chip" id="target-list-count">0 selected</span></div>
+          <div class="table-wrap target-table">
+            <table>
+              <thead><tr><th>Structure</th><th class="numeric">Quantity</th><th class="numeric">Total defense</th><th class="numeric"><span title="Uses your full decoder stock for this row alone. The plan above checks all selected rows together.">Stock alone</span></th></tr></thead>
+              <tbody id="selected-target-rows"></tbody>
+            </table>
+          </div>
+          <p class="table-empty" id="targets-empty">No targets added.</p>
+        </div>
+        <details class="details target-section">
+          <summary>+ Add targets</summary>
+          <div class="table-wrap target-table">
+          <table>
+              <thead><tr><th>Structure</th><th class="numeric">Fuse slots</th><th class="numeric"><span title="Defense when empty to defense when all slots have Gold fuses.">Defense</span></th><th class="numeric">Add</th></tr></thead>
+              <tbody id="target-catalog-rows"></tbody>
+          </table>
+          </div>
+        </details>
       </section>
       <p class="footer-note">Defense values are estimates. Confirm the load in-game.</p>
     </section>
@@ -71,54 +90,103 @@
       ];
       const bunkerInput = document.getElementById("bunker-bonus");
       const structures = [
-        { name: "Trailer", base: 5, slots: 9 },
-        { name: "Small House", base: 15, slots: 27 },
-        { name: "Mansion", base: 30, slots: 42 },
-        { name: "Car Garage", base: 4, slots: 6 },
-        { name: "Large Car Garage", base: 6, slots: 12 },
-        { name: "Warehouse", base: 10, slots: 15 },
-        { name: "Crypto Farm Warehouse", base: 5, slots: 9 },
-        { name: "Workshop", base: 5, slots: 9 },
-        { name: "Grow Room", base: 5, slots: 9 },
-        { name: "Chemical Laboratory", base: 3, slots: 6 },
-        { name: "Mesh Fence", base: 2, slots: 3 },
-        { name: "Metal Fence", base: 5, slots: 6 },
-        { name: "Concrete Fence", base: 10, slots: 9 },
-        { name: "Checkpoint / settlement gate", base: 10, slots: 0 }
+        { id: "trailer", name: "Trailer", base: 5, slots: 9 },
+        { id: "small-house", name: "Small House", base: 15, slots: 27 },
+        { id: "mansion", name: "Mansion", base: 30, slots: 42 },
+        { id: "car-garage", name: "Car Garage", base: 4, slots: 6 },
+        { id: "large-car-garage", name: "Large Car Garage", base: 6, slots: 12 },
+        { id: "warehouse", name: "Warehouse", base: 10, slots: 15 },
+        { id: "crypto-farm-warehouse", name: "Crypto Farm Warehouse", base: 5, slots: 9 },
+        { id: "workshop", name: "Workshop", base: 5, slots: 9 },
+        { id: "grow-room", name: "Grow Room", base: 5, slots: 9 },
+        { id: "chemical-laboratory", name: "Chemical Laboratory", base: 3, slots: 6 },
+        { id: "mesh-fence", name: "Mesh Fence", base: 2, slots: 3 },
+        { id: "metal-fence", name: "Metal Fence", base: 5, slots: 6 },
+        { id: "concrete-fence", name: "Concrete Fence", base: 10, slots: 9 },
+        { id: "checkpoint-gate", name: "Checkpoint / settlement gate", base: 10, slots: 0, maxCount: 4 }
       ];
+      const selectedTargets = new Map();
       const output = (id) => document.getElementById(id);
+      const selectedRows = output("selected-target-rows");
+      const catalogRows = output("target-catalog-rows");
+      const emptyTargets = output("targets-empty");
 
       function count(input) { return Math.max(0, Math.floor(Number(input.value) || 0)); }
+      function getStructure(id) { return structures.find((structure) => structure.id === id); }
+
+      function changeTarget(id, difference) {
+        const structure = getStructure(id);
+        const current = selectedTargets.get(id) || 0;
+        const limit = structure.maxCount || Number.MAX_SAFE_INTEGER;
+        const next = Math.max(0, Math.min(limit, current + difference));
+        if (next === 0) selectedTargets.delete(id);
+        else selectedTargets.set(id, next);
+        update();
+      }
 
       function update() {
         const [green, purple, gold] = inputs.map(count);
-        const total = green + purple + gold;
+        const totalDecoders = green + purple + gold;
         const points = green + purple * 3 + gold * 5;
         const bunker = bunkerInput.checked ? 3 : 0;
-        output("decoder-count").textContent = String(total);
+        let totalTargets = 0;
+        let totalMin = 0;
+        let totalMax = 0;
+
+        output("decoder-count").textContent = String(totalDecoders);
         output("decoder-points").textContent = String(points);
-        output("target-rows").innerHTML = structures.map((structure) => {
+
+        const selectedMarkup = [];
+        for (const structure of structures) {
+          const quantity = selectedTargets.get(structure.id) || 0;
+          if (!quantity) continue;
+          const minEach = structure.base + bunker;
+          const maxEach = minEach + structure.slots * 5;
+          const rowMin = minEach * quantity;
+          const rowMax = maxEach * quantity;
+          totalTargets += quantity;
+          totalMin += rowMin;
+          totalMax += rowMax;
+          let rowStatus;
+          if (points < rowMin) rowStatus = "<span class=\"outlook bad\" title=\"Need " + (rowMin - points) + " more points for this row's empty targets.\">Short " + (rowMin - points) + "</span>";
+          else if (points >= rowMax) rowStatus = "<span class=\"outlook good\" title=\"Enough points for this row even at full Gold.\">Ready</span>";
+          else rowStatus = "<span class=\"outlook maybe\" title=\"Enough for this row when empty; fuse load may change it.\">Possible</span>";
+          selectedMarkup.push(
+            "<tr><td>" + structure.name + "</td><td class=\"numeric\"><div class=\"qty-control\"><button class=\"qty-btn\" type=\"button\" data-id=\"" + structure.id + "\" data-change=\"-1\" aria-label=\"Remove one " + structure.name + "\" title=\"Remove one\">−</button><span class=\"qty-count\">" + quantity + "</span><button class=\"qty-btn\" type=\"button\" data-id=\"" + structure.id + "\" data-change=\"1\" aria-label=\"Add one " + structure.name + "\" title=\"Add one\" " + (structure.maxCount && quantity >= structure.maxCount ? "disabled" : "") + ">+</button></div></td><td class=\"numeric\">" + rowMin + "–" + rowMax + "</td><td class=\"numeric\">" + rowStatus + "</td></tr>"
+          );
+        }
+        selectedRows.innerHTML = selectedMarkup.join("");
+        emptyTargets.hidden = totalTargets > 0;
+        output("target-count").textContent = String(totalTargets);
+        output("target-list-count").textContent = totalTargets + " selected";
+        output("target-min").textContent = String(totalMin);
+        output("target-max").textContent = String(totalMax);
+
+        if (totalTargets === 0) {
+          output("target-status").textContent = "Add targets to build your raid list.";
+        } else if (points < totalMin) {
+          output("target-status").textContent = "Short by " + (totalMin - points) + " points for all targets at minimum defense.";
+        } else if (points >= totalMax) {
+          output("target-status").textContent = "Enough for every target, even with all fuse slots filled with Gold.";
+        } else {
+          output("target-status").textContent = "Enough for every empty target · " + (points - totalMin) + " fuse points available across the list.";
+        }
+
+        catalogRows.innerHTML = structures.map((structure) => {
           const min = structure.base + bunker;
           const max = min + structure.slots * 5;
-          let status;
-          let kind;
-          let detail;
-          if (points < min) {
-            status = "Short " + (min - points);
-            kind = "bad";
-            detail = "Need " + (min - points) + " more breach point" + (min - points === 1 ? "" : "s") + " for an empty target.";
-          } else if (points >= max) {
-            status = "Guaranteed";
-            kind = "good";
-            detail = "Enough points even with every fuse slot filled with Gold.";
-          } else {
-            status = "Depends on load";
-            kind = "maybe";
-            const fusePoints = points - min;
-            detail = "Can cover up to " + fusePoints + " fuse point" + (fusePoints === 1 ? "" : "s") + "; scout the actual load.";
-          }
-          return "<tr><td>" + structure.name + "</td><td class=\"numeric\">" + structure.slots + "</td><td class=\"numeric\">" + min + "–" + max + "</td><td class=\"numeric\"><span class=\"outlook " + kind + "\" title=\"" + detail + "\">" + status + "</span></td></tr>";
+          const quantity = selectedTargets.get(structure.id) || 0;
+          const atLimit = structure.maxCount && quantity >= structure.maxCount;
+          const addLabel = structure.id === "checkpoint-gate" ? "Add gate (max 4)" : "Add " + structure.name;
+          return "<tr><td>" + structure.name + "</td><td class=\"numeric\">" + structure.slots + "</td><td class=\"numeric\">" + min + "–" + max + "</td><td class=\"numeric\"><button class=\"add-target\" type=\"button\" data-id=\"" + structure.id + "\" aria-label=\"" + addLabel + "\" title=\"" + addLabel + "\" " + (atLimit ? "disabled" : "") + ">+</button></td></tr>";
         }).join("");
+
+        for (const button of selectedRows.querySelectorAll("button[data-change]")) {
+          button.addEventListener("click", () => changeTarget(button.dataset.id, Number(button.dataset.change)));
+        }
+        for (const button of catalogRows.querySelectorAll("button[data-id]")) {
+          button.addEventListener("click", () => changeTarget(button.dataset.id, 1));
+        }
       }
 
       for (const input of inputs) input.addEventListener("input", update);
