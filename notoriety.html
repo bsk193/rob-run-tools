@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#101116">
   <title>Sale Planner · ROB RUN Tools</title>
-  <link rel="stylesheet" href="styles.css?v=be65196">
+  <link rel="stylesheet" href="styles.css?v=tooltips-20261120">
 </head>
 <body>
   <header class="appbar">
@@ -31,7 +31,7 @@
             </select>
           </label>
           <div class="field" id="district-fields" hidden>
-            <label class="label-line" for="district-level">District level <button class="info" type="button" title="Fixed location bonus only: Level I +10%, Level II +20%, Level III +30%. Notoriety does not apply." aria-label="District Sales Center bonus details">i</button></label>
+            <label class="label-line" for="district-level">District level <button class="info" type="button" data-tooltip="Fixed bonus only: Level I +10%, Level II +20%, Level III +30%. Notoriety does not apply." aria-label="DISTRICT SALES CENTER BONUS DETAILS">i</button></label>
             <select id="district-level">
               <option value="1">Level I</option>
               <option value="2">Level II</option>
@@ -39,7 +39,7 @@
             </select>
           </div>
           <label class="field" id="party-field" for="party">
-            <span class="label-line">Crew <button class="info" type="button" title="Sets your estimated starting Notoriety." aria-label="Crew size details">i</button></span>
+            <span class="label-line">Crew <button class="info" type="button" data-tooltip="Sets your starting Notoriety level." aria-label="CREW SIZE DETAILS">i</button></span>
             <select id="party">
               <option value="solo" selected>Solo</option>
               <option value="duo">Duo</option>
@@ -47,11 +47,11 @@
             </select>
           </label>
           <label class="field" for="slots">
-            <span class="label-line">Free cash slots <button class="info" type="button" title="Each free slot holds one $25,000 cash stack." aria-label="Cash slots details">i</button></span>
+            <span class="label-line">Free cash slots <button class="info" type="button" data-tooltip="Each free slot holds one $25,000 cash stack." aria-label="CASH SLOTS DETAILS">i</button></span>
             <input id="slots" type="number" min="0" step="1" value="42" inputmode="numeric">
           </label>
           <label class="field" id="target-field" for="target">
-            <span class="label-line">Target Notoriety <button class="info" type="button" title="Notoriety thresholds are estimates. Check the live sale preview." aria-label="Notoriety estimate details">i</button></span>
+            <span class="label-line">Target Notoriety <button class="info" type="button" data-tooltip="Choose a level to see the loot needed to reach it and the bonus for later sales." aria-label="NOTORIETY ESTIMATE DETAILS">i</button></span>
             <select id="target"></select>
           </label>
         </div>
@@ -59,19 +59,19 @@
       <div class="results">
         <div class="results-head"><h2>Estimate</h2><span class="live-chip" id="location-chip">Looty Bay</span></div>
         <div class="result-grid" aria-live="polite" aria-atomic="true">
-          <div class="result" id="result-start-level"><span class="result-label">Starting level</span><strong class="result-value" id="start-level">Level 4</strong></div>
-          <div class="result"><span class="result-label">Cash capacity</span><strong class="result-value" id="capacity">$1,050,000</strong><span class="result-detail" id="capacity-detail">42 free slots</span></div>
-          <div class="result" id="result-sale-needed"><span class="result-label">Loot to reach target</span><strong class="result-value" id="sale-needed">$800,000</strong><span class="result-detail">Before bonuses</span></div>
-          <div class="result"><span class="result-label" id="bonus-label">Bonus after target</span><strong class="result-value" id="total-bonus">+50%</strong><span class="result-detail" id="bonus-detail">Applies to later Looty Bay sales</span></div>
-          <div class="result primary" id="result-payout-card"><span class="result-label" id="payout-label">Cash from target sale</span><strong class="result-value" id="payout">$1,080,000</strong><span class="result-detail" id="slots-needed">44 cash stacks at +35%</span></div>
-          <div class="result" id="result-fill-card"><span class="result-label" id="fill-label">Extra loot after target</span><strong class="result-value" id="fill-value">$0</strong><span class="result-detail" id="fill-detail">Target sale exceeds capacity</span></div>
+          <div class="result" id="result-start-level" tabindex="0" role="group" data-tooltip="Starting Notoriety based on crew."><span class="result-label">Starting level</span><strong class="result-value" id="start-level">Level 4</strong></div>
+          <div class="result" id="result-capacity" tabindex="0" role="group" data-tooltip="42 free cash slots × $25,000 per stack."><span class="result-label">Cash capacity</span><strong class="result-value" id="capacity">$1,050,000</strong><span class="result-detail" id="capacity-detail">42 free slots</span></div>
+          <div class="result" id="result-sale-needed" tabindex="0" role="group" data-tooltip="Base loot value before the current Notoriety bonus."><span class="result-label">Loot to reach target</span><strong class="result-value" id="sale-needed">$800,000</strong><span class="result-detail">Before bonuses</span></div>
+          <div class="result" id="result-bonus" tabindex="0" role="group" data-tooltip="Applies to later Looty Bay sales."><span class="result-label" id="bonus-label">Bonus after target</span><strong class="result-value" id="total-bonus">+50%</strong><span class="result-detail" id="bonus-detail">Applies to later Looty Bay sales</span></div>
+          <div class="result primary" id="result-payout-card" tabindex="0" role="group" data-tooltip="Cash from the target sale at your current bonus."><span class="result-label" id="payout-label">Cash from target sale</span><strong class="result-value" id="payout">$1,080,000</strong><span class="result-detail" id="slots-needed">44 cash stacks at +35%</span></div>
+          <div class="result" id="result-fill-card" tabindex="0" role="group" data-tooltip="Extra loot value to sell after reaching your target."><span class="result-label" id="fill-label">Extra loot after target</span><strong class="result-value" id="fill-value">$0</strong><span class="result-detail" id="fill-detail">Target sale exceeds capacity</span></div>
         </div>
-        <p class="status-line" id="fit-status" aria-live="polite"></p>
+        <p class="status-line" id="fit-status" tabindex="0" aria-live="polite"></p>
         <details class="details" id="notoriety-ladder">
           <summary>Notoriety sale ladder</summary>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>Target</th><th>Loot to reach</th><th>Bonus after</th><th><span title="This target sale uses your current Notoriety bonus. The target bonus applies to later sales.">Cash from target sale</span></th></tr></thead>
+              <thead><tr><th>Target</th><th>Loot to reach</th><th>Bonus after</th><th><span tabindex="0" data-tooltip="This target sale uses your current Notoriety bonus. The target bonus applies to later sales.">Cash from target sale</span></th></tr></thead>
               <tbody id="ladder-body"></tbody>
             </table>
           </div>
@@ -158,18 +158,39 @@
         output("fill-detail").textContent = isCenter ? "Estimated loot value" : payout > capacity ? "Target sale exceeds capacity" : "Level " + targetLevel + " · +" + totalBonus + "% on later sales";
         output("location-chip").textContent = isCenter ? "District Center · Level " + districtRoman : "Looty Bay";
 
+        output("result-start-level").dataset.tooltip = "Starting Notoriety level " + startLevel + ", based on crew.";
+        output("result-capacity").dataset.tooltip = slots + " free cash slots × $25,000 per stack = " + money.format(capacity) + ".";
+        output("result-sale-needed").dataset.tooltip = money.format(saleNeeded) + " base loot value to reach Level " + targetLevel + ", before the current bonus.";
+        output("result-bonus").dataset.tooltip = isCenter
+          ? "Level " + districtRoman + " District Sales Center bonus is fixed at +" + totalBonus + "%. Notoriety does not apply."
+          : "Level " + targetLevel + " gives +" + totalBonus + "% on later Looty Bay sales.";
+        output("result-payout-card").dataset.tooltip = isCenter
+          ? money.format(capacity) + " cash at full capacity."
+          : money.format(saleNeeded) + " loot at the current +" + currentNotorietyBonus + "% bonus pays " + money.format(payout) + " and needs " + slotsNeeded + " stacks.";
+        output("result-fill-card").dataset.tooltip = isCenter
+          ? money.format(Math.round(fillValue)) + " estimated loot value fills " + slots + " cash slots at +" + totalBonus + "%."
+          : payout > capacity
+            ? "The target sale exceeds your cash capacity by " + money.format(payout - capacity) + "."
+            : "Sell about " + money.format(Math.round(extraLootAfterTarget)) + " more loot at +" + totalBonus + "% after reaching the target.";
+
         if (slots === 0) {
-          output("fit-status").textContent = "No free cash slots.";
+          output("fit-status").textContent = "No free slots";
+          output("fit-status").dataset.tooltip = "Add free cash slots to calculate your carrying capacity.";
         } else if (isCenter) {
-          output("fit-status").textContent = "Fixed Sales Center bonus · Notoriety does not apply.";
+          output("fit-status").textContent = "Fixed +" + totalBonus + "% · No Notoriety";
+          output("fit-status").dataset.tooltip = "District Sales Center Level " + districtRoman + " has a fixed +" + totalBonus + "% bonus. Notoriety does not apply.";
         } else if (payout > capacity) {
-          output("fit-status").textContent = "Target sale pays " + money.format(payout) + " and needs " + slotsNeeded + " stacks; you are " + (slotsNeeded - slots) + " slot" + (slotsNeeded - slots === 1 ? "" : "s") + " short. Total haul caps at " + money.format(capacity) + ".";
+          output("fit-status").textContent = money.format(payout - capacity) + " over · " + (slotsNeeded - slots) + " slots short";
+          output("fit-status").dataset.tooltip = "The target sale pays " + money.format(payout) + " and needs " + slotsNeeded + " stacks. You are " + (slotsNeeded - slots) + " slots short. Total haul caps at " + money.format(capacity) + ".";
         } else if (saleNeeded === 0) {
-          output("fit-status").textContent = "Sell " + money.format(Math.round(extraLootAfterTarget)) + " loot at +" + totalBonus + "% to fill " + slots + " stacks · " + money.format(capacity) + " total haul.";
+          output("fit-status").textContent = money.format(Math.round(extraLootAfterTarget)) + " loot → " + money.format(capacity) + " haul";
+          output("fit-status").dataset.tooltip = "Sell about " + money.format(Math.round(extraLootAfterTarget)) + " loot at +" + totalBonus + "% to fill all " + slots + " cash stacks.";
         } else if (extraLootAfterTarget > 0) {
-          output("fit-status").textContent = "After target, sell " + money.format(Math.round(extraLootAfterTarget)) + " more at +" + totalBonus + "% · " + money.format(Math.round(totalLootForFullHaul)) + " loot for " + money.format(capacity) + " total haul.";
+          output("fit-status").textContent = "+" + money.format(Math.round(extraLootAfterTarget)) + " loot at +" + totalBonus + "% · " + money.format(capacity) + " haul";
+          output("fit-status").dataset.tooltip = "After reaching Level " + targetLevel + ", sell about " + money.format(Math.round(extraLootAfterTarget)) + " more loot at +" + totalBonus + "%. Total loot sold is about " + money.format(Math.round(totalLootForFullHaul)) + " for a " + money.format(capacity) + " haul.";
         } else {
-          output("fit-status").textContent = "Target sale fills your slots · total haul " + money.format(Math.min(payout, capacity)) + ".";
+          output("fit-status").textContent = "Target sale fills slots · " + money.format(Math.min(payout, capacity)) + " haul";
+          output("fit-status").dataset.tooltip = "The target sale fills your available cash slots.";
         }
 
         const rows = [];
@@ -194,5 +215,6 @@
       calculate();
     })();
   </script>
+  <script src="tooltips.js?v=tooltips-20261120"></script>
 </body>
 </html>

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#101116">
   <title>Raid Planner · ROB RUN Tools</title>
-  <link rel="stylesheet" href="styles.css?v=be65196">
+  <link rel="stylesheet" href="styles.css?v=tooltips-20261120">
 </head>
 <body>
   <header class="appbar">
@@ -50,19 +50,19 @@
         <label class="toggle" for="bunker-bonus">
           <input id="bunker-bonus" type="checkbox">
           <span>Bunker defense +3</span>
-          <button class="info" type="button" title="Adds 3 defense to structures in a settlement with a Bunker." aria-label="Bunker defense details">i</button>
+          <button class="info" type="button" data-tooltip="Adds 3 defense to structures in a settlement with a Bunker." aria-label="BUNKER DEFENSE DETAILS">i</button>
         </label>
         <div class="target-summary" aria-live="polite" aria-atomic="true">
           <div class="target-summary-item"><span>Targets</span><strong id="target-count">0</strong></div>
           <div class="target-summary-item"><span>Needed · empty</span><strong id="target-min">0</strong></div>
           <div class="target-summary-item"><span>Needed · full Gold</span><strong id="target-max">0</strong></div>
         </div>
-        <p class="target-plan-status" id="target-status" aria-live="polite">Add targets to build your raid list.</p>
+        <p class="target-plan-status" id="target-status" tabindex="0" aria-live="polite">Add targets</p>
         <div class="target-section">
           <div class="section-title"><h2>Target list</h2><span class="live-chip" id="target-list-count">0 selected</span></div>
           <div class="table-wrap target-table">
             <table>
-              <thead><tr><th>Structure</th><th class="numeric">Quantity</th><th class="numeric">Total defense</th><th class="numeric"><span title="Uses your full decoder stock for this row alone. The plan above checks all selected rows together.">Stock alone</span></th></tr></thead>
+              <thead><tr><th>Structure</th><th class="numeric">Quantity</th><th class="numeric">Total defense</th><th class="numeric"><span tabindex="0" data-tooltip="Uses your full decoder stock for this row alone. The plan above checks all selected rows together.">Stock alone</span></th></tr></thead>
               <tbody id="selected-target-rows"></tbody>
             </table>
           </div>
@@ -72,13 +72,13 @@
           <summary>+ Add targets</summary>
           <div class="table-wrap target-table">
           <table>
-              <thead><tr><th>Structure</th><th class="numeric">Fuse slots</th><th class="numeric"><span title="Defense when empty to defense when all slots have Gold fuses.">Defense</span></th><th class="numeric">Add</th></tr></thead>
+              <thead><tr><th>Structure</th><th class="numeric">Fuse slots</th><th class="numeric"><span tabindex="0" data-tooltip="Defense when empty to defense when all slots have Gold fuses.">Defense</span></th><th class="numeric">Add</th></tr></thead>
               <tbody id="target-catalog-rows"></tbody>
           </table>
           </div>
         </details>
       </section>
-      <p class="footer-note">Defense values are estimates. Confirm the load in-game.</p>
+      <button class="info footer-help" type="button" data-tooltip="Defense values are estimates. Confirm the load in-game." aria-label="DEFENSE ESTIMATE DETAILS">i</button>
     </section>
   </main>
   <script>
@@ -144,15 +144,16 @@
           const maxEach = minEach + structure.slots * 5;
           const rowMin = minEach * quantity;
           const rowMax = maxEach * quantity;
+          const defenseRange = structure.slots === 0 ? String(rowMin) : rowMin + "–" + rowMax;
           totalTargets += quantity;
           totalMin += rowMin;
           totalMax += rowMax;
           let rowStatus;
-          if (points < rowMin) rowStatus = "<span class=\"outlook bad\" title=\"Need " + (rowMin - points) + " more points for this row's empty targets.\">Short " + (rowMin - points) + "</span>";
-          else if (points >= rowMax) rowStatus = "<span class=\"outlook good\" title=\"Enough points for this row even at full Gold.\">Ready</span>";
-          else rowStatus = "<span class=\"outlook maybe\" title=\"Enough for this row when empty; fuse load may change it.\">Possible</span>";
+          if (points < rowMin) rowStatus = "<span class=\"outlook bad\" tabindex=\"0\" data-tooltip=\"Need " + (rowMin - points) + " more points for this row's empty targets.\">Short " + (rowMin - points) + "</span>";
+          else if (points >= rowMax) rowStatus = "<span class=\"outlook good\" tabindex=\"0\" data-tooltip=\"Enough points for this row even at full Gold.\">Ready</span>";
+          else rowStatus = "<span class=\"outlook maybe\" tabindex=\"0\" data-tooltip=\"Enough for this row when empty; fuse load may change it.\">Possible</span>";
           selectedMarkup.push(
-            "<tr><td>" + structure.name + "</td><td class=\"numeric\"><div class=\"qty-control\"><button class=\"qty-btn\" type=\"button\" data-id=\"" + structure.id + "\" data-change=\"-1\" aria-label=\"Remove one " + structure.name + "\" title=\"Remove one\">−</button><span class=\"qty-count\">" + quantity + "</span><button class=\"qty-btn\" type=\"button\" data-id=\"" + structure.id + "\" data-change=\"1\" aria-label=\"Add one " + structure.name + "\" title=\"Add one\" " + (structure.maxCount && quantity >= structure.maxCount ? "disabled" : "") + ">+</button></div></td><td class=\"numeric\">" + rowMin + "–" + rowMax + "</td><td class=\"numeric\">" + rowStatus + "</td></tr>"
+            "<tr><td>" + structure.name + "</td><td class=\"numeric\"><div class=\"qty-control\"><button class=\"qty-btn\" type=\"button\" data-id=\"" + structure.id + "\" data-change=\"-1\" aria-label=\"REMOVE ONE " + structure.name.toUpperCase() + "\">−</button><span class=\"qty-count\">" + quantity + "</span><button class=\"qty-btn\" type=\"button\" data-id=\"" + structure.id + "\" data-change=\"1\" aria-label=\"ADD ONE " + structure.name.toUpperCase() + "\" " + (structure.maxCount && quantity >= structure.maxCount ? "disabled" : "") + ">+</button></div></td><td class=\"numeric\">" + defenseRange + "</td><td class=\"numeric\">" + rowStatus + "</td></tr>"
           );
         }
         selectedRows.innerHTML = selectedMarkup.join("");
@@ -163,22 +164,27 @@
         output("target-max").textContent = String(totalMax);
 
         if (totalTargets === 0) {
-          output("target-status").textContent = "Add targets to build your raid list.";
+          output("target-status").textContent = "Add targets";
+          output("target-status").dataset.tooltip = "Add targets to compare your decoder points with target defense.";
         } else if (points < totalMin) {
-          output("target-status").textContent = "Short by " + (totalMin - points) + " points for all targets at minimum defense.";
+          output("target-status").textContent = "Short " + (totalMin - points) + " pts";
+          output("target-status").dataset.tooltip = "Need " + totalMin + " points for all empty targets. You have " + points + ".";
         } else if (points >= totalMax) {
-          output("target-status").textContent = "Enough for every target, even with all fuse slots filled with Gold.";
+          output("target-status").textContent = "All targets ready";
+          output("target-status").dataset.tooltip = "You have " + points + " points, enough for every target even with all fuse slots filled with Gold.";
         } else {
-          output("target-status").textContent = "Enough for every empty target · " + (points - totalMin) + " fuse points available across the list.";
+          output("target-status").textContent = "Empty targets ready · " + (points - totalMin) + " pts left";
+          output("target-status").dataset.tooltip = "Every target is ready at minimum defense. " + (points - totalMin) + " points remain for fuses across the list.";
         }
 
         catalogRows.innerHTML = structures.map((structure) => {
           const min = structure.base + bunker;
           const max = min + structure.slots * 5;
+          const defenseRange = structure.slots === 0 ? String(min) : min + "–" + max;
           const quantity = selectedTargets.get(structure.id) || 0;
           const atLimit = structure.maxCount && quantity >= structure.maxCount;
-          const addLabel = structure.id === "checkpoint-gate" ? "Add gate (max 4)" : "Add " + structure.name;
-          return "<tr><td>" + structure.name + "</td><td class=\"numeric\">" + structure.slots + "</td><td class=\"numeric\">" + min + "–" + max + "</td><td class=\"numeric\"><button class=\"add-target\" type=\"button\" data-id=\"" + structure.id + "\" aria-label=\"" + addLabel + "\" title=\"" + addLabel + "\" " + (atLimit ? "disabled" : "") + ">+</button></td></tr>";
+          const addLabel = structure.id === "checkpoint-gate" ? "ADD GATE MAX 4" : "ADD " + structure.name.toUpperCase();
+          return "<tr><td>" + structure.name + "</td><td class=\"numeric\">" + structure.slots + "</td><td class=\"numeric\">" + defenseRange + "</td><td class=\"numeric\"><button class=\"add-target\" type=\"button\" data-id=\"" + structure.id + "\" aria-label=\"" + addLabel + "\" " + (atLimit ? "disabled" : "") + ">+</button></td></tr>";
         }).join("");
 
         for (const button of selectedRows.querySelectorAll("button[data-change]")) {
@@ -207,5 +213,6 @@
       update();
     })();
   </script>
+  <script src="tooltips.js?v=tooltips-20261120"></script>
 </body>
 </html>
