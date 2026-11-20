@@ -184,6 +184,20 @@ tbody tr.selected { background: color-mix(in srgb, var(--accent) 11%, transparen
 .target-table { border: 1px solid var(--outline); border-radius: 17px; overflow: hidden; }
 .target-table th { padding: 13px 12px; background: var(--surface-2); }
 .target-table td { padding: 12px; }
+.target-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; margin: 16px 0 10px; }
+.target-summary-item { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: 8px; padding: 12px; border: 1px solid var(--outline); border-radius: 14px; background: var(--surface-2); }
+.target-summary-item span { color: var(--muted); font-size: .76rem; }
+.target-summary-item strong { color: var(--text); font-size: 1rem; font-variant-numeric: tabular-nums; }
+.target-plan-status { min-height: 42px; margin: 0 2px 4px; color: var(--accent); font-size: .88rem; font-weight: 600; line-height: 1.4; }
+.target-section { margin-top: 17px; }
+.target-section .section-title { margin-bottom: 10px; }
+.target-section .details { margin-top: 15px; }
+.target-section summary { color: var(--accent); }
+.qty-control { display: inline-flex; align-items: center; gap: 7px; padding: 3px; border: 1px solid var(--outline); border-radius: 999px; background: var(--surface-2); }
+.qty-btn, .add-target { display: inline-grid; width: 29px; height: 29px; place-items: center; padding: 0; border: 1px solid var(--outline); border-radius: 50%; background: var(--surface-3); color: var(--accent); font-size: 1.05rem; font-weight: 700; line-height: 1; cursor: pointer; }
+.add-target { width: 31px; height: 31px; }
+.qty-count { min-width: 16px; color: var(--text); font-size: .82rem; font-weight: 650; text-align: center; font-variant-numeric: tabular-nums; }
+.qty-btn:disabled, .add-target:disabled { opacity: .38; cursor: not-allowed; }
 .numeric { text-align: right; white-space: nowrap; }
 .outlook { display: inline-flex; align-items: center; min-height: 27px; padding: 4px 9px; border-radius: 999px; font-size: .76rem; font-weight: 650; white-space: nowrap; }
 .outlook.good { background: color-mix(in srgb, var(--good) 15%, transparent); color: var(--good); }
@@ -235,6 +249,8 @@ tbody tr.selected { background: color-mix(in srgb, var(--accent) 11%, transparen
   .summary-item { min-width: 0; flex: 1 1 140px; }
   .target-table th, .target-table td { padding: 10px 7px; font-size: .75rem; }
   .outlook { padding: 4px 7px; font-size: .68rem; }
+  .target-summary { grid-template-columns: 1fr; }
+  .target-summary-item { padding: 10px 12px; }
 }
 @media (max-width: 390px) {
   .brand > span:last-child { display: none; }
