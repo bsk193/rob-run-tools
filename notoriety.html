@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#eef4f2">
+  <title>ROB RUN Fence Cash Calculator</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --page: #eef4f2;
+      --surface: #ffffff;
+      --ink: #17302c;
+      --muted: #526762;
+      --line: #cfdbd7;
+      --accent: #116d55;
+      --accent-soft: #e2f1eb;
+      --field: #ffffff;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --page: #121b19;
+        --surface: #1c2925;
+        --ink: #e7f0ec;
+        --muted: #b2c1bb;
+        --line: #3a4a44;
+        --accent: #73d1ad;
+        --accent-soft: #263d34;
+        --field: #17221f;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: clamp(20px, 5vw, 56px) 16px;
+      background: var(--page);
+      color: var(--ink);
+    }
+    main {
+      width: min(100%, 760px);
+      margin: 0 auto;
+    }
+    .site-nav {
+      width: min(100%, 760px);
+      margin: 0 auto 18px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .site-nav a {
+      padding: 8px 11px;
+      border-radius: 999px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+    .site-nav a[aria-current="page"] { background: var(--accent-soft); color: var(--accent); }
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.55rem, 4vw, 2.15rem);
+      letter-spacing: -0.035em;
+    }
+    .intro {
+      margin: 0 0 24px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .panel {
+      padding: clamp(18px, 4vw, 28px);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--surface);
+      box-shadow: 0 12px 36px rgb(20 45 38 / 8%);
+    }
+    .inputs {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+    label { display: grid; gap: 8px; font-weight: 600; }
+    label span { font-size: 0.94rem; }
+    select, input {
+      width: 100%;
+      min-height: 48px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--field);
+      color: var(--ink);
+      font: inherit;
+    }
+    select:focus, input:focus {
+      outline: 3px solid color-mix(in srgb, var(--accent) 32%, transparent);
+      border-color: var(--accent);
+    }
+    .results {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 155px), 1fr));
+      gap: 12px;
+    }
+    .result {
+      min-width: 0;
+      padding: 16px;
+      border-radius: 12px;
+      background: var(--accent-soft);
+    }
+    .result-label {
+      display: block;
+      margin-bottom: 9px;
+      color: var(--muted);
+      font-size: 0.84rem;
+      line-height: 1.35;
+    }
+    .result-value {
+      display: block;
+      font-size: clamp(1.15rem, 3.8vw, 1.55rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      overflow-wrap: anywhere;
+      font-variant-numeric: tabular-nums;
+    }
+    .result-detail {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+    .note {
+      margin: 18px 0 0;
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.5;
+    }
+    .ladder-section { margin-top: 24px; }
+    h2 { margin: 0 0 12px; font-size: 1.05rem; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th, td { padding: 10px 8px; border-bottom: 1px solid var(--line); }
+    th { color: var(--muted); font-size: 0.84rem; font-weight: 600; }
+    td:last-child, th:last-child { text-align: right; white-space: nowrap; }
+    tbody tr.selected { background: var(--accent-soft); }
+    .status { margin: 14px 0 0; font-weight: 600; line-height: 1.5; }
+    @media (max-width: 460px) {
+      th, td { padding: 9px 5px; font-size: 0.85rem; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="site-nav" aria-label="ROB RUN tools">
+    <a href="index.html">Home</a>
+    <a href="notoriety.html" aria-current="page">Cash &amp; Notoriety</a>
+    <a href="raids.html">Raid Planner</a>
+  </nav>
+  <main>
+    <section class="panel" aria-label="Cash capacity settings and results">
+      <div class="inputs">
+        <label for="party">
+          <span>Mode</span>
+          <select id="party">
+            <option value="solo" selected>Solo</option>
+            <option value="duo">Duo</option>
+            <option value="trio">Trio</option>
+          </select>
+        </label>
+        <label for="slots">
+          <span>Free Slots (bags + vehicles)</span>
+          <input id="slots" type="number" min="0" step="1" value="42" inputmode="numeric">
+        </label>
+        <label for="target">
+          <span>Target Notority</span>
+          <select id="target"></select>
+        </label>
+      </div>
+      <div class="results" aria-live="polite" aria-atomic="true">
+        <div class="result">
+          <span class="result-label">Starting at</span>
+          <strong class="result-value" id="start-level">Level 4</strong>
+        </div>
+        <div class="result">
+          <span class="result-label">Capacity</span>
+          <strong class="result-value" id="capacity">$1,050,000</strong>
+          <span class="result-detail">25K per free slot</span>
+        </div>
+        <div class="result">
+          <span class="result-label">Amount to target</span>
+          <strong class="result-value" id="sale-needed">$800,000</strong>
+          <span class="result-detail">Before the target level bonus</span>
+        </div>
+        <div class="result">
+          <span class="result-label">Fence bonus at target</span>
+          <strong class="result-value" id="target-bonus">+50%</strong>
+          <span class="result-detail" id="target-label">Level 5</span>
+        </div>
+        <div class="result">
+          <span class="result-label">Estimated cash from that sale</span>
+          <strong class="result-value" id="payout">$1,200,000</strong>
+          <span class="result-detail" id="slots-needed">48 slots needed · 42 free</span>
+        </div>
+        <div class="result">
+          <span class="result-label">Loot value to fill your free slots</span>
+          <strong class="result-value" id="fill-value">$700,000</strong>
+          <span class="result-detail">At the target level bonus</span>
+        </div>
+      </div>
+      <p class="status" id="fit-status" aria-live="polite"></p>
+      <div class="ladder-section">
+        <h2>Estimated sale needed from your starting level</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Target level</th><th>Fence bonus</th><th>Sale value</th></tr></thead>
+            <tbody id="ladder-body"></tbody>
+          </table>
+        </div>
+      </div>
+      <p class="note" id="note">Thresholds are community-reported estimates. Other criminal actions can add Notoriety progress; check the Fence preview for the live level and payout.</p>
+    </section>
+  </main>
+  <script>
+    (() => {
+      const partyInput = document.getElementById("party");
+      const slotsInput = document.getElementById("slots");
+      const targetInput = document.getElementById("target");
+      const startOutput = document.getElementById("start-level");
+      const capacityOutput = document.getElementById("capacity");
+      const saleOutput = document.getElementById("sale-needed");
+      const bonusOutput = document.getElementById("target-bonus");
+      const targetLabelOutput = document.getElementById("target-label");
+      const payoutOutput = document.getElementById("payout");
+      const slotsNeededOutput = document.getElementById("slots-needed");
+      const fillValueOutput = document.getElementById("fill-value");
+      const fitStatusOutput = document.getElementById("fit-status");
+      const ladderBody = document.getElementById("ladder-body");
+      const noteOutput = document.getElementById("note");
+      const cashPerSlot = 25000;
+      const cumulativeThresholds = [0, 200000, 500000, 1000000, 1800000];
+      const fenceBonuses = [0, 10, 20, 35, 50];
+      const startingRates = {
+        solo: { level: 4, bonus: 35 },
+        duo: { level: 2, bonus: 10 },
+        trio: { level: 1, bonus: 0 }
+      };
+      const money = new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        maximumFractionDigits: 0
+      });
+
+      function refreshTargets(startLevel) {
+        const previousTarget = Number(targetInput.value) || 5;
+        targetInput.replaceChildren();
+        for (let level = startLevel; level <= 5; level += 1) {
+          const option = document.createElement("option");
+          option.value = String(level);
+          option.textContent = `Level ${level}`;
+          targetInput.append(option);
+        }
+        targetInput.value = String(Math.max(startLevel, Math.min(5, previousTarget)));
+      }
+
+      function update() {
+        const party = startingRates[partyInput.value];
+        const slots = Math.max(0, Math.floor(Number(slotsInput.value) || 0));
+        const capacity = slots * cashPerSlot;
+        const targetLevel = Number(targetInput.value);
+        const targetBonus = fenceBonuses[targetLevel - 1];
+        const saleNeeded = Math.max(0, cumulativeThresholds[targetLevel - 1] - cumulativeThresholds[party.level - 1]);
+        const payout = saleNeeded * (1 + targetBonus / 100);
+        const slotsNeeded = Math.ceil(payout / cashPerSlot);
+        const fillValue = capacity / (1 + targetBonus / 100);
+
+        startOutput.textContent = `Level ${party.level}`;
+        capacityOutput.textContent = money.format(capacity);
+        saleOutput.textContent = money.format(saleNeeded);
+        bonusOutput.textContent = `+${targetBonus}%`;
+        targetLabelOutput.textContent = `Level ${targetLevel}`;
+        payoutOutput.textContent = money.format(payout);
+        slotsNeededOutput.textContent = `${slotsNeeded} slots needed · ${slots} free`;
+        fillValueOutput.textContent = money.format(Math.round(fillValue));
+
+        if (slotsNeeded > slots) {
+          const shortfall = slotsNeeded - slots;
+          fitStatusOutput.textContent = `The level-up sale payout exceeds your capacity by about ${money.format(payout - capacity)}. You need ${shortfall} more free slot${shortfall === 1 ? "" : "s"} to collect it all.`;
+        } else {
+          const remainingCash = capacity - payout;
+          const moreLoot = remainingCash / (1 + targetBonus / 100);
+          fitStatusOutput.textContent = remainingCash > 0
+            ? `The payout fits. After collecting it, about ${money.format(Math.round(moreLoot))} more loot value at the target bonus would fill the remaining slots.`
+            : "The level-up sale payout fills your available slots.";
+        }
+
+        const rows = [];
+        for (let level = party.level; level <= 5; level += 1) {
+          const needed = Math.max(0, cumulativeThresholds[level - 1] - cumulativeThresholds[party.level - 1]);
+          rows.push(`<tr class="${level === targetLevel ? "selected" : ""}"><td>Level ${level}${level === party.level ? " · start" : ""}</td><td>+${fenceBonuses[level - 1]}%</td><td>${money.format(needed)}</td></tr>`);
+        }
+        ladderBody.innerHTML = rows.join("");
+        noteOutput.textContent = `Estimate assumes no other Notoriety progress this visit and that the whole deal uses the level shown after the sale. Cash is capped at $25,000 per free slot; verify the Fence preview.`;
+      }
+
+      partyInput.addEventListener("change", () => {
+        refreshTargets(startingRates[partyInput.value].level);
+        update();
+      });
+      targetInput.addEventListener("change", update);
+      slotsInput.addEventListener("input", update);
+      refreshTargets(startingRates[partyInput.value].level);
+      targetInput.value = "5";
+      update();
+    })();
+  </script>
+</body>
+</html>

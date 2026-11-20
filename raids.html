@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#eef4f2">
+  <title>ROB RUN Raid Calculator</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --page: #eef4f2;
+      --surface: #ffffff;
+      --ink: #17302c;
+      --muted: #526762;
+      --line: #cfdbd7;
+      --accent: #116d55;
+      --accent-soft: #e2f1eb;
+      --field: #ffffff;
+      --good: #146b42;
+      --maybe: #7b5a08;
+      --bad: #a3372e;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --page: #121b19;
+        --surface: #1c2925;
+        --ink: #e7f0ec;
+        --muted: #b2c1bb;
+        --line: #3a4a44;
+        --accent: #73d1ad;
+        --accent-soft: #263d34;
+        --field: #17221f;
+        --good: #86d8a8;
+        --maybe: #f2cf73;
+        --bad: #ff9a8e;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: clamp(20px, 5vw, 56px) 16px;
+      background: var(--page);
+      color: var(--ink);
+    }
+    main { width: min(100%, 920px); margin: 0 auto; }
+    .site-nav {
+      width: min(100%, 920px);
+      margin: 0 auto 18px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .site-nav a {
+      padding: 8px 11px;
+      border-radius: 999px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+    .site-nav a[aria-current="page"] { background: var(--accent-soft); color: var(--accent); }
+    h1 { margin: 0 0 8px; font-size: clamp(1.55rem, 4vw, 2.15rem); letter-spacing: -0.035em; }
+    h2 { margin: 0 0 12px; font-size: 1.05rem; }
+    .intro { margin: 0 0 24px; color: var(--muted); line-height: 1.5; }
+    .panel {
+      padding: clamp(18px, 4vw, 28px);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--surface);
+      box-shadow: 0 12px 36px rgb(20 45 38 / 8%);
+    }
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+    .summary-item { padding: 14px 16px; border-radius: 12px; background: var(--accent-soft); }
+    .summary-label { display: block; margin-bottom: 5px; color: var(--muted); font-size: 0.86rem; }
+    .summary-value { display: block; font-size: 1.45rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .tabs { display: flex; gap: 8px; border-bottom: 1px solid var(--line); margin-bottom: 20px; }
+    .tab {
+      border: 0;
+      border-bottom: 3px solid transparent;
+      padding: 10px 14px;
+      background: transparent;
+      color: var(--muted);
+      font: inherit;
+      font-weight: 650;
+      cursor: pointer;
+    }
+    .tab[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+    .decoder-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+    label { display: grid; gap: 8px; font-weight: 600; }
+    label span { font-size: 0.94rem; }
+    input[type="number"] {
+      width: 100%; min-height: 48px; padding: 10px 12px;
+      border: 1px solid var(--line); border-radius: 10px;
+      background: var(--field); color: var(--ink); font: inherit;
+    }
+    input[type="number"]:focus { outline: 3px solid color-mix(in srgb, var(--accent) 32%, transparent); border-color: var(--accent); }
+    .tier-note { color: var(--muted); font-size: 0.82rem; font-weight: 400; }
+    .toggle { display: flex; align-items: center; gap: 10px; margin: 0 0 16px; font-weight: 500; }
+    .toggle input { width: 18px; height: 18px; accent-color: var(--accent); }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th, td { padding: 11px 9px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { color: var(--muted); font-size: 0.84rem; font-weight: 600; }
+    td.numeric, th.numeric { text-align: right; white-space: nowrap; }
+    .outlook { font-weight: 650; }
+    .outlook.good { color: var(--good); }
+    .outlook.maybe { color: var(--maybe); }
+    .outlook.bad { color: var(--bad); }
+    .note { margin: 16px 0 0; color: var(--muted); font-size: 0.88rem; line-height: 1.5; }
+    [hidden] { display: none !important; }
+    @media (max-width: 620px) {
+      .decoder-grid { grid-template-columns: 1fr; }
+      .summary { grid-template-columns: 1fr; }
+      th, td { padding: 9px 6px; font-size: 0.84rem; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="site-nav" aria-label="ROB RUN tools">
+    <a href="index.html">Home</a>
+    <a href="notoriety.html">Cash &amp; Notoriety</a>
+    <a href="raids.html" aria-current="page">Raid Planner</a>
+  </nav>
+  <main>
+    <h1>ROB RUN Raid Calculator</h1>
+    <p class="intro">Enter your decoder stock to see which structures you can breach, from unfused to fully filled with Gold fuses.</p>
+    <section class="panel" aria-label="Raid planning calculator">
+      <div class="summary" aria-live="polite" aria-atomic="true">
+        <div class="summary-item">
+          <span class="summary-label">Decoders in inventory</span>
+          <strong class="summary-value" id="decoder-count">0</strong>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">Total breach points</span>
+          <strong class="summary-value" id="decoder-points">0</strong>
+        </div>
+      </div>
+      <div class="tabs" role="tablist" aria-label="Raid calculator sections">
+        <button class="tab" id="inventory-tab" type="button" role="tab" aria-controls="inventory-panel" aria-selected="true">Inventory</button>
+        <button class="tab" id="targets-tab" type="button" role="tab" aria-controls="targets-panel" aria-selected="false">Targets</button>
+      </div>
+      <section id="inventory-panel" role="tabpanel" aria-labelledby="inventory-tab">
+        <h2>Your decoders</h2>
+        <div class="decoder-grid">
+          <label for="green-count">
+            <span>Green decoders</span>
+            <input id="green-count" type="number" min="0" step="1" value="0" inputmode="numeric">
+            <span class="tier-note">1 breach point each</span>
+          </label>
+          <label for="purple-count">
+            <span>Purple decoders</span>
+            <input id="purple-count" type="number" min="0" step="1" value="0" inputmode="numeric">
+            <span class="tier-note">3 breach points each</span>
+          </label>
+          <label for="gold-count">
+            <span>Gold decoders</span>
+            <input id="gold-count" type="number" min="0" step="1" value="0" inputmode="numeric">
+            <span class="tier-note">5 breach points each</span>
+          </label>
+        </div>
+        <p class="note">Each decoder is counted at its listed breach value. Your full inventory is checked against each target independently.</p>
+      </section>
+      <section id="targets-panel" role="tabpanel" aria-labelledby="targets-tab" hidden>
+        <h2>Target structures</h2>
+        <label class="toggle" for="bunker-bonus">
+          <input id="bunker-bonus" type="checkbox">
+          <span>Add +3 defense when the settlement has a Bunker</span>
+        </label>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Structure</th>
+                <th class="numeric">Fuse slots</th>
+                <th class="numeric">Defense range</th>
+                <th>Your outlook</th>
+              </tr>
+            </thead>
+            <tbody id="target-rows"></tbody>
+          </table>
+        </div>
+        <p class="note">Minimum is the structure with no fuses. Maximum assumes every slot has a Gold fuse worth 5 points. “Maybe” means your stock can cover some fuse setups; scout to know the actual load.</p>
+      </section>
+      <p class="note">The settlement/checkpoint gate is reported at 10 fixed defense with no fuse slots; a Bunker adds +3 where applicable. Other structure values are community-reported and may change with updates. Confirm the live Security System before committing decoders.</p>
+    </section>
+  </main>
+  <script>
+    (() => {
+      const decoderInputs = [
+        document.getElementById("green-count"),
+        document.getElementById("purple-count"),
+        document.getElementById("gold-count")
+      ];
+      const bunkerInput = document.getElementById("bunker-bonus");
+      const decoderCountOutput = document.getElementById("decoder-count");
+      const decoderPointsOutput = document.getElementById("decoder-points");
+      const targetRows = document.getElementById("target-rows");
+      const structures = [
+        { name: "Trailer", base: 5, slots: 9 },
+        { name: "Small House", base: 15, slots: 27 },
+        { name: "Mansion", base: 30, slots: 42 },
+        { name: "Car Garage", base: 4, slots: 6 },
+        { name: "Large Car Garage", base: 6, slots: 12 },
+        { name: "Warehouse", base: 10, slots: 15 },
+        { name: "Crypto Farm Warehouse", base: 5, slots: 9 },
+        { name: "Workshop", base: 5, slots: 9 },
+        { name: "Grow Room", base: 5, slots: 9 },
+        { name: "Chemical Laboratory", base: 3, slots: 6 },
+        { name: "Mesh Fence", base: 2, slots: 3 },
+        { name: "Metal Fence", base: 5, slots: 6 },
+        { name: "Concrete Fence", base: 10, slots: 9 },
+        { name: "Settlement / checkpoint gate", base: 10, slots: 0 }
+      ];
+
+      function countValue(input) {
+        return Math.max(0, Math.floor(Number(input.value) || 0));
+      }
+
+      function update() {
+        const [green, purple, gold] = decoderInputs.map(countValue);
+        const totalCount = green + purple + gold;
+        const totalPoints = green + purple * 3 + gold * 5;
+        const bunker = bunkerInput.checked ? 3 : 0;
+        decoderCountOutput.textContent = String(totalCount);
+        decoderPointsOutput.textContent = String(totalPoints);
+
+        targetRows.innerHTML = structures.map((structure) => {
+          const minDefense = structure.base + bunker;
+          const maxDefense = minDefense + structure.slots * 5;
+          let text;
+          let kind;
+          if (totalPoints < minDefense) {
+            text = `Not enough · ${minDefense - totalPoints} short even if empty`;
+            kind = "bad";
+          } else if (totalPoints >= maxDefense && structure.slots === 0) {
+            text = "Can breach fixed defense";
+            kind = "good";
+          } else if (totalPoints >= maxDefense) {
+            text = "Can breach even full Gold";
+            kind = "good";
+          } else {
+            const fuseBudget = totalPoints - minDefense;
+            text = `Possible up to ${fuseBudget} fuse point${fuseBudget === 1 ? "" : "s"}`;
+            kind = "maybe";
+          }
+          return `<tr><td>${structure.name}</td><td class="numeric">${structure.slots}</td><td class="numeric">${minDefense}–${maxDefense}</td><td class="outlook ${kind}">${text}</td></tr>`;
+        }).join("");
+      }
+
+      for (const input of decoderInputs) input.addEventListener("input", update);
+      bunkerInput.addEventListener("change", update);
+
+      const tabs = [
+        { button: document.getElementById("inventory-tab"), panel: document.getElementById("inventory-panel") },
+        { button: document.getElementById("targets-tab"), panel: document.getElementById("targets-panel") }
+      ];
+      for (const tab of tabs) {
+        tab.button.addEventListener("click", () => {
+          for (const item of tabs) {
+            const active = item === tab;
+            item.button.setAttribute("aria-selected", String(active));
+            item.panel.hidden = !active;
+          }
+        });
+      }
+      update();
+    })();
+  </script>
+</body>
+</html>
