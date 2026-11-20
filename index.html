@@ -3,72 +3,39 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#eef4f2">
+  <meta name="theme-color" content="#101116">
   <title>ROB RUN Tools</title>
-  <style>
-    :root {
-      color-scheme: light dark;
-      --page: #eef4f2;
-      --surface: #ffffff;
-      --ink: #17302c;
-      --muted: #526762;
-      --line: #cfdbd7;
-      --accent: #116d55;
-      --accent-soft: #e2f1eb;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --page: #121b19;
-        --surface: #1c2925;
-        --ink: #e7f0ec;
-        --muted: #b2c1bb;
-        --line: #3a4a44;
-        --accent: #73d1ad;
-        --accent-soft: #263d34;
-      }
-    }
-    * { box-sizing: border-box; }
-    body { margin: 0; min-height: 100vh; padding: clamp(22px, 6vw, 64px) 16px; background: var(--page); color: var(--ink); }
-    main { width: min(100%, 780px); margin: 0 auto; }
-    .eyebrow { margin: 0 0 8px; color: var(--accent); font-size: 0.86rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
-    h1 { margin: 0 0 10px; font-size: clamp(2rem, 6vw, 3.4rem); letter-spacing: -0.05em; }
-    .intro { max-width: 58ch; margin: 0 0 28px; color: var(--muted); line-height: 1.6; }
-    .tools { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-    .tool-card {
-      display: flex; min-height: 190px; flex-direction: column; align-items: flex-start;
-      padding: 22px; border: 1px solid var(--line); border-radius: 16px;
-      background: var(--surface); color: inherit; text-decoration: none;
-      transition: transform 140ms ease, border-color 140ms ease;
-    }
-    .tool-card:hover { transform: translateY(-2px); border-color: var(--accent); }
-    .tool-card:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
-    .tool-card h2 { margin: 0 0 9px; font-size: 1.2rem; }
-    .tool-card p { margin: 0; color: var(--muted); line-height: 1.5; }
-    .open-label { margin-top: auto; padding-top: 20px; color: var(--accent); font-weight: 700; }
-    .note { margin: 22px 0 0; color: var(--muted); font-size: 0.88rem; line-height: 1.5; }
-    @media (max-width: 560px) { .tools { grid-template-columns: 1fr; } .tool-card { min-height: 160px; } }
-    @media (prefers-reduced-motion: reduce) { .tool-card { transition: none; } .tool-card:hover { transform: none; } }
-  </style>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <main>
-    <p class="eyebrow">Community game tools</p>
-    <h1>ROB RUN Tools</h1>
-    <p class="intro">Quick planners for Fence sales and base raids. Open a tool, enter your current inventory or setup, and get an estimate before you go in.</p>
-    <section class="tools" aria-label="Available calculators">
+  <header class="appbar">
+    <div class="appbar-inner">
+      <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true">R</span><span>ROB RUN TOOLS</span></a>
+      <nav class="nav" aria-label="Main navigation">
+        <a href="notoriety.html">Sale Planner</a>
+        <a href="raids.html">Raid Planner</a>
+      </nav>
+    </div>
+  </header>
+  <main class="page home-page">
+    <section class="home-intro">
+      <p class="eyebrow">Run planning</p>
+      <h1>Plan sales. Pick targets.</h1>
+      <p class="page-description">Quick calculators for ROB RUN.</p>
+    </section>
+    <section class="tool-grid" aria-label="Calculators">
       <a class="tool-card" href="notoriety.html">
-        <h2>Cash &amp; Notoriety Planner</h2>
-        <p>Choose Solo, Duo, or Trio, set your free bag and vehicle slots, and see estimated sale amounts, Fence bonuses, and cash capacity by target level.</p>
-        <span class="open-label">Open planner →</span>
+        <span class="card-top"><span class="card-icon" aria-hidden="true">$</span><span class="card-arrow" aria-hidden="true">↗</span></span>
+        <h2>Sale Planner</h2>
+        <p>Plan Notoriety, sale bonuses and cash capacity.</p>
       </a>
       <a class="tool-card" href="raids.html">
+        <span class="card-top"><span class="card-icon" aria-hidden="true">⌁</span><span class="card-arrow" aria-hidden="true">↗</span></span>
         <h2>Raid Planner</h2>
-        <p>Enter your Green, Purple, and Gold decoders to compare your breach points with structures, fuse slots, and the checkpoint or settlement gate.</p>
-        <span class="open-label">Open planner →</span>
+        <p>Match decoder points to target defenses.</p>
       </a>
     </section>
-    <p class="note">Game values can change and some structure data comes from community reports. Check the live in-game offer or Security System before committing loot or decoders.</p>
+    <p class="home-note">Estimates only. Check the in-game offer and defenses.</p>
   </main>
 </body>
 </html>

@@ -1,10 +1,10 @@
 # ROB RUN Tools
 
-A small static site with two calculators:
+A small responsive site with two calculators:
 
-- Cash & Notoriety Planner (`notoriety.html`)
-- Raid Planner (`raids.html`)
+- **Sale Planner** estimates Notoriety progress, cash pickup, free-slot capacity, and Looty Bay or District Sales Center bonuses.
+- **Raid Planner** compares decoder points with structure defense ranges, including checkpoint gates.
 
-The pages use plain HTML, CSS, and JavaScript, with no build step or external dependencies. To publish with GitHub Pages, set the repository's Pages source to the `main` branch and the root folder.
+The site uses plain HTML, CSS, and JavaScript with no build step or external dependencies. GitHub Pages serves the `main` branch from the repository root.
 
-Some game mechanics and structure values are community-reported estimates. Verify live values in ROB RUN before committing a raid or sale.
+District Sales Center bonuses and some game thresholds are community-reported estimates. Verify the live in-game offer and defenses before relying on them.
