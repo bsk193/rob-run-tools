@@ -4,21 +4,21 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#101116">
-  <title>Sale Planner · ROB RUN Tools</title>
+  <title>Sale Planner · RR Tools</title>
   <link rel="stylesheet" href="styles.css?v=tooltips-20261120">
 </head>
 <body>
   <header class="appbar">
     <div class="appbar-inner">
-      <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true">R</span><span>ROB RUN TOOLS</span></a>
+      <a class="brand" href="index.html"><img width="150px" height="68px" class="brand-logo" src="rr-tools.png" alt="RR TOOLS" /></a>
       <nav class="nav" aria-label="Main navigation">
-        <a href="notoriety.html" aria-current="page">Sale Planner</a>
-        <a href="raids.html">Raid Planner</a>
+        <a href="sale-planner.html" aria-current="page">Sale Planner</a>
+        <a href="raid-planner.html">Raid Planner</a>
       </nav>
     </div>
   </header>
   <main class="page page-narrow">
-    <div class="page-head"><p class="eyebrow">Cash &amp; Notoriety</p><h1>Sale Planner</h1></div>
+    <div class="page-head"><p class="eyebrow">Looty Bay &amp; Sales Center</p><h1>Sale Planner</h1></div>
     <section class="planner surface" aria-label="Sale planning calculator">
       <div class="setup">
         <div class="section-title"><h2>Setup</h2></div>
@@ -26,8 +26,8 @@
           <label class="field" for="location">
             <span class="label-line">Sale point</span>
             <select id="location">
-              <option value="fence">Looty Bay Fence</option>
-              <option value="center">District Sales Center</option>
+              <option value="fence">Looty Bay</option>
+              <option value="center">Sales Center</option>
             </select>
           </label>
           <div class="field" id="district-fields" hidden>
@@ -35,7 +35,7 @@
             <select id="district-level">
               <option value="1">Level I</option>
               <option value="2">Level II</option>
-              <option value="3">Level III · Highlands</option>
+              <option value="3">Level III</option>
             </select>
           </div>
           <label class="field" id="party-field" for="party">
@@ -47,8 +47,8 @@
             </select>
           </label>
           <label class="field" for="slots">
-            <span class="label-line">Free cash slots <button class="info" type="button" data-tooltip="Each free slot holds one $25,000 cash stack." aria-label="CASH SLOTS DETAILS">i</button></span>
-            <input id="slots" type="number" min="0" step="1" value="42" inputmode="numeric">
+            <span class="label-line">Free slots <button class="info" type="button" data-tooltip="Each free slot holds one 25K cash stack." aria-label="CASH SLOTS DETAILS">i</button></span>
+            <input id="slots" type="number" min="0" step="1" value="0" inputmode="numeric">
           </label>
           <label class="field" id="target-field" for="target">
             <span class="label-line">Target Notoriety <button class="info" type="button" data-tooltip="Choose a level to see the loot needed to reach it and the bonus for later sales." aria-label="NOTORIETY ESTIMATE DETAILS">i</button></span>
