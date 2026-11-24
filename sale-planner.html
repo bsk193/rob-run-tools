@@ -59,19 +59,19 @@
       <div class="results">
         <div class="results-head"><h2>Estimate</h2><span class="live-chip" id="location-chip">Looty Bay</span></div>
         <div class="result-grid" aria-live="polite" aria-atomic="true">
-          <div class="result" id="result-start-level" tabindex="0" role="group" data-tooltip="Starting Notoriety based on crew."><span class="result-label">Starting level</span><strong class="result-value" id="start-level">Level 4</strong></div>
+          <div class="result" id="result-start-level" tabindex="0" role="group" data-tooltip="Starting Notoriety based on crew."><span class="result-label">Loot to fill slots</span><strong class="result-value" id="loot-to-fill">$0</strong><span class="result-detail" id="start-level">Starts at Level 4</span></div>
           <div class="result" id="result-capacity" tabindex="0" role="group" data-tooltip="42 free cash slots × $25,000 per stack."><span class="result-label">Cash capacity</span><strong class="result-value" id="capacity">$1,050,000</strong><span class="result-detail" id="capacity-detail">42 free slots</span></div>
           <div class="result" id="result-sale-needed" tabindex="0" role="group" data-tooltip="Base loot value before the current Notoriety bonus."><span class="result-label">Loot to reach target</span><strong class="result-value" id="sale-needed">$800,000</strong><span class="result-detail">Before bonuses</span></div>
-          <div class="result" id="result-bonus" tabindex="0" role="group" data-tooltip="Applies to later Looty Bay sales."><span class="result-label" id="bonus-label">Bonus after target</span><strong class="result-value" id="total-bonus">+50%</strong><span class="result-detail" id="bonus-detail">Applies to later Looty Bay sales</span></div>
-          <div class="result primary" id="result-payout-card" tabindex="0" role="group" data-tooltip="Cash from the target sale at your current bonus."><span class="result-label" id="payout-label">Cash from target sale</span><strong class="result-value" id="payout">$1,080,000</strong><span class="result-detail" id="slots-needed">44 cash stacks at +35%</span></div>
-          <div class="result" id="result-fill-card" tabindex="0" role="group" data-tooltip="Extra loot value to sell after reaching your target."><span class="result-label" id="fill-label">Extra loot after target</span><strong class="result-value" id="fill-value">$0</strong><span class="result-detail" id="fill-detail">Target sale exceeds capacity</span></div>
+          <div class="result" id="result-bonus" tabindex="0" role="group" data-tooltip="Bonus used by batches that reach the selected Looty Bay level."><span class="result-label" id="bonus-label">Bonus at target</span><strong class="result-value" id="total-bonus">+50%</strong><span class="result-detail" id="bonus-detail">Level 5 batch rate</span></div>
+          <div class="result" id="result-payout-card" tabindex="0" role="group" data-tooltip="Estimated cash after selling each Notoriety level batch."><span class="result-label" id="payout-label">Cash on table</span><strong class="result-value" id="payout">$1,080,000</strong><span class="result-detail" id="slots-needed">44 cash stacks</span></div>
+          <div class="result primary" id="result-fill-card" tabindex="0" role="group" data-tooltip="Cash you can carry, capped by your free slots."><span class="result-label" id="fill-label">Cash to carry</span><strong class="result-value" id="fill-value">$1,050,000</strong><span class="result-detail" id="fill-detail">42 / 42 stacks</span></div>
         </div>
         <p class="status-line" id="fit-status" tabindex="0" aria-live="polite"></p>
         <details class="details" id="notoriety-ladder">
           <summary>Notoriety sale ladder</summary>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>Target</th><th>Loot to reach</th><th>Bonus after</th><th><span tabindex="0" data-tooltip="This target sale uses your current Notoriety bonus. The target bonus applies to later sales.">Cash from target sale</span></th></tr></thead>
+              <thead><tr><th>Target</th><th>Batch loot</th><th>Bonus</th><th>Cash from batch</th><th>Total cash</th></tr></thead>
               <tbody id="ladder-body"></tbody>
             </table>
           </div>
@@ -110,96 +110,136 @@
         targetInput.value = String(Math.max(startLevel, Math.min(5, oldTarget)));
       }
 
+      function batchesToLevel(startLevel, targetLevel) {
+        const batches = [];
+        let totalCash = 0;
+        let totalLoot = 0;
+        for (let level = startLevel + 1; level <= targetLevel; level += 1) {
+          const loot = thresholds[level - 1] - thresholds[level - 2];
+          const bonus = notorietyBonuses[level - 1];
+          const cash = loot * (1 + bonus / 100);
+          totalLoot += loot;
+          totalCash += cash;
+          batches.push({ level, loot, bonus, cash, totalCash });
+        }
+        return { batches, totalCash, totalLoot };
+      }
+
+      function lootForCashCapacity(capacity, startLevel, targetLevel, batches, cashAtTarget, lootToTarget, targetBonus) {
+        if (capacity <= 0) return 0;
+        if (capacity > cashAtTarget) {
+          return Math.ceil(lootToTarget + (capacity - cashAtTarget) / (1 + targetBonus / 100));
+        }
+
+        let cashLeft = capacity;
+        let lootTotal = 0;
+        let currentLevel = startLevel;
+        for (const batch of batches) {
+          if (cashLeft >= batch.cash) {
+            cashLeft -= batch.cash;
+            lootTotal += batch.loot;
+            currentLevel = batch.level;
+          } else {
+            const currentBonus = notorietyBonuses[currentLevel - 1];
+            lootTotal += cashLeft / (1 + currentBonus / 100);
+            return Math.ceil(lootTotal);
+          }
+        }
+        return Math.ceil(lootTotal);
+      }
+
       function calculate() {
         const isCenter = locationInput.value === "center";
         const startLevel = starts[partyInput.value].level;
-        const targetLevel = Number(targetInput.value) || startLevel;
+        const targetLevel = Math.max(startLevel, Math.min(5, Number(targetInput.value) || startLevel));
         const slots = Math.max(0, Math.floor(Number(slotsInput.value) || 0));
         const locationBonus = isCenter ? districtBonuses[Number(districtInput.value)] : 0;
-        const targetNotorietyBonus = isCenter ? 0 : notorietyBonuses[targetLevel - 1];
-        const totalBonus = isCenter ? locationBonus : targetNotorietyBonus;
-        const multiplier = 1 + totalBonus / 100;
-        const currentNotorietyBonus = notorietyBonuses[startLevel - 1];
-        const payoutMultiplier = isCenter ? multiplier : 1 + currentNotorietyBonus / 100;
+        const targetBonus = isCenter ? locationBonus : notorietyBonuses[targetLevel - 1];
+        const multiplier = 1 + targetBonus / 100;
         const capacity = slots * 25000;
         const saleNeeded = isCenter ? 0 : Math.max(0, thresholds[targetLevel - 1] - thresholds[startLevel - 1]);
-        const payout = isCenter ? capacity : saleNeeded * payoutMultiplier;
-        const slotsNeeded = Math.ceil(payout / 25000);
-        const additionalCashCapacity = Math.max(0, capacity - payout);
-        const extraLootAfterTarget = additionalCashCapacity / multiplier;
-        const fillValue = isCenter ? capacity / multiplier : extraLootAfterTarget;
-        const totalLootForFullHaul = saleNeeded + extraLootAfterTarget;
+        const plan = isCenter ? { batches: [], totalCash: capacity, totalLoot: 0 } : batchesToLevel(startLevel, targetLevel);
+        const cashAtTarget = plan.totalCash;
+        const cashToCarry = Math.min(capacity, cashAtTarget);
+        const slotsNeeded = Math.ceil(cashAtTarget / 25000);
+        const lootToFill = isCenter
+          ? Math.ceil(capacity / multiplier)
+          : lootForCashCapacity(capacity, startLevel, targetLevel, plan.batches, cashAtTarget, saleNeeded, targetBonus);
+        const extraLootAfterTarget = !isCenter && cashAtTarget < capacity
+          ? (capacity - cashAtTarget) / multiplier
+          : 0;
+        const carryStacks = Math.ceil(cashToCarry / 25000);
         const districtLevel = Number(districtInput.value);
         const districtRoman = ["I", "II", "III"][districtLevel - 1];
 
         partyField.hidden = isCenter;
         targetField.hidden = isCenter;
         districtFields.hidden = !isCenter;
-        output("result-start-level").hidden = isCenter;
         output("result-sale-needed").hidden = isCenter;
         notorietyLadder.hidden = isCenter;
-        output("result-payout-card").classList.toggle("primary", !isCenter);
-        output("result-fill-card").classList.toggle("primary", isCenter);
+        output("result-start-level").classList.toggle("primary", false);
+        output("result-payout-card").classList.toggle("primary", false);
+        output("result-fill-card").classList.toggle("primary", true);
 
-        output("start-level").textContent = "Level " + startLevel;
+        output("start-level").textContent = isCenter ? "Fixed sales rate" : "Starts at Level " + startLevel;
         output("capacity").textContent = money.format(capacity);
         output("capacity-detail").textContent = slots + " free cash slot" + (slots === 1 ? "" : "s");
         output("sale-needed").textContent = money.format(saleNeeded);
-        output("bonus-label").textContent = isCenter ? "Sales Center bonus" : "Bonus after target";
-        output("total-bonus").textContent = "+" + totalBonus + "%";
-        output("bonus-detail").textContent = isCenter ? "Fixed · no Notoriety" : "Applies to later Looty Bay sales";
-        output("payout-label").textContent = isCenter ? "Cash at full capacity" : "Cash from target sale";
-        output("payout").textContent = money.format(payout);
+        output("bonus-label").textContent = isCenter ? "Sales Center bonus" : "Bonus at target";
+        output("total-bonus").textContent = "+" + targetBonus + "%";
+        output("bonus-detail").textContent = isCenter ? "Fixed · no Notoriety" : "Level " + targetLevel + " batch rate";
+        output("payout-label").textContent = isCenter ? "Cash at full capacity" : "Cash on table";
+        output("payout").textContent = money.format(cashAtTarget);
         output("slots-needed").textContent = isCenter
           ? slots + " cash stack" + (slots === 1 ? "" : "s")
-           : slotsNeeded + " cash stack" + (slotsNeeded === 1 ? "" : "s") + " at +" + currentNotorietyBonus + "%";
-        output("fill-label").textContent = isCenter ? "Loot to fill slots" : "Extra loot after target";
-        output("fill-value").textContent = money.format(Math.round(fillValue));
-        output("fill-detail").textContent = isCenter ? "Estimated loot value" : payout > capacity ? "Target sale exceeds capacity" : "Level " + targetLevel + " · +" + totalBonus + "% on later sales";
+          : slotsNeeded + " cash stack" + (slotsNeeded === 1 ? "" : "s") + " in level batches";
+        output("fill-label").textContent = "Cash to carry";
+        output("fill-value").textContent = money.format(cashToCarry);
+        output("fill-detail").textContent = carryStacks + " / " + slots + " cash stacks";
+        output("loot-to-fill").textContent = money.format(lootToFill);
         output("location-chip").textContent = isCenter ? "District Center · Level " + districtRoman : "Looty Bay";
 
-        output("result-start-level").dataset.tooltip = "Starting Notoriety level " + startLevel + ", based on crew.";
+        output("result-start-level").dataset.tooltip = isCenter
+          ? "About " + money.format(lootToFill) + " base loot at +" + targetBonus + "% fills your " + slots + " free cash slots."
+          : "Starting at Level " + startLevel + ". About " + money.format(lootToFill) + " base loot fills your " + slots + " free cash slots.";
         output("result-capacity").dataset.tooltip = slots + " free cash slots × $25,000 per stack = " + money.format(capacity) + ".";
-        output("result-sale-needed").dataset.tooltip = money.format(saleNeeded) + " base loot value to reach Level " + targetLevel + ", before the current bonus.";
+        output("result-sale-needed").dataset.tooltip = money.format(saleNeeded) + " base loot reaches Level " + targetLevel + ". Each level-up batch uses the bonus for the level it reaches.";
         output("result-bonus").dataset.tooltip = isCenter
-          ? "Level " + districtRoman + " District Sales Center bonus is fixed at +" + totalBonus + "%. Notoriety does not apply."
-          : "Level " + targetLevel + " gives +" + totalBonus + "% on later Looty Bay sales.";
+          ? "Level " + districtRoman + " District Sales Center bonus is fixed at +" + targetBonus + "%. Notoriety does not apply."
+          : "The batch that reaches Level " + targetLevel + " pays at +" + targetBonus + "%. Later sales use this rate until the next level is reached.";
+        const batchDetails = plan.batches.map((batch) =>
+          "Level " + batch.level + ": " + money.format(batch.loot) + " loot at +" + batch.bonus + "% = " + money.format(batch.cash)
+        ).join(" · ");
         output("result-payout-card").dataset.tooltip = isCenter
           ? money.format(capacity) + " cash at full capacity."
-          : money.format(saleNeeded) + " loot at the current +" + currentNotorietyBonus + "% bonus pays " + money.format(payout) + " and needs " + slotsNeeded + " stacks.";
+          : (batchDetails ? "Batch breakdown: " + batchDetails + " · " : "") + "Total on table: " + money.format(cashAtTarget) + " and " + slotsNeeded + " stacks.";
         output("result-fill-card").dataset.tooltip = isCenter
-          ? money.format(Math.round(fillValue)) + " estimated loot value fills " + slots + " cash slots at +" + totalBonus + "%."
-          : payout > capacity
-            ? "The target sale exceeds your cash capacity by " + money.format(payout - capacity) + "."
-            : "Sell about " + money.format(Math.round(extraLootAfterTarget)) + " more loot at +" + totalBonus + "% after reaching the target.";
+          ? money.format(cashToCarry) + " cash fits your " + slots + " free slots."
+          : "Cash on table: " + money.format(cashAtTarget) + ". Cash capacity: " + money.format(capacity) + ". You can carry " + money.format(cashToCarry) + " in " + carryStacks + " stacks.";
 
         if (slots === 0) {
           output("fit-status").textContent = "No free slots";
           output("fit-status").dataset.tooltip = "Add free cash slots to calculate your carrying capacity.";
         } else if (isCenter) {
-          output("fit-status").textContent = "Fixed +" + totalBonus + "% · No Notoriety";
-          output("fit-status").dataset.tooltip = "District Sales Center Level " + districtRoman + " has a fixed +" + totalBonus + "% bonus. Notoriety does not apply.";
-        } else if (payout > capacity) {
-          output("fit-status").textContent = money.format(payout - capacity) + " over · " + (slotsNeeded - slots) + " slots short";
-          output("fit-status").dataset.tooltip = "The target sale pays " + money.format(payout) + " and needs " + slotsNeeded + " stacks. You are " + (slotsNeeded - slots) + " slots short. Total haul caps at " + money.format(capacity) + ".";
-        } else if (saleNeeded === 0) {
-          output("fit-status").textContent = money.format(Math.round(extraLootAfterTarget)) + " loot → " + money.format(capacity) + " haul";
-          output("fit-status").dataset.tooltip = "Sell about " + money.format(Math.round(extraLootAfterTarget)) + " loot at +" + totalBonus + "% to fill all " + slots + " cash stacks.";
+          output("fit-status").textContent = "Fixed +" + targetBonus + "% · No Notoriety";
+          output("fit-status").dataset.tooltip = "District Sales Center Level " + districtRoman + " has a fixed +" + targetBonus + "% bonus. Notoriety does not apply.";
+        } else if (cashAtTarget > capacity) {
+          output("fit-status").textContent = money.format(cashAtTarget - capacity) + " over · " + Math.max(0, slotsNeeded - slots) + " stacks short";
+          output("fit-status").dataset.tooltip = "The target batches put " + money.format(cashAtTarget) + " on the table; you can carry " + money.format(capacity) + ". Sell about " + money.format(lootToFill) + " base loot to fill your slots.";
         } else if (extraLootAfterTarget > 0) {
-          output("fit-status").textContent = "+" + money.format(Math.round(extraLootAfterTarget)) + " loot at +" + totalBonus + "% · " + money.format(capacity) + " haul";
-          output("fit-status").dataset.tooltip = "After reaching Level " + targetLevel + ", sell about " + money.format(Math.round(extraLootAfterTarget)) + " more loot at +" + totalBonus + "%. Total loot sold is about " + money.format(Math.round(totalLootForFullHaul)) + " for a " + money.format(capacity) + " haul.";
+          output("fit-status").textContent = money.format(Math.ceil(extraLootAfterTarget)) + " more loot to fill slots";
+          output("fit-status").dataset.tooltip = "After reaching Level " + targetLevel + ", sell about " + money.format(Math.ceil(extraLootAfterTarget)) + " more base loot at +" + targetBonus + "%. Total base loot for a full haul is about " + money.format(lootToFill) + ".";
         } else {
-          output("fit-status").textContent = "Target sale fills slots · " + money.format(Math.min(payout, capacity)) + " haul";
-          output("fit-status").dataset.tooltip = "The target sale fills your available cash slots.";
+          output("fit-status").textContent = "Target fills slots · " + money.format(cashToCarry) + " haul";
+          output("fit-status").dataset.tooltip = "The target batches fill your available cash slots.";
         }
 
         const rows = [];
         if (!isCenter) {
-          for (let level = startLevel + 1; level <= 5; level += 1) {
-            const value = thresholds[level - 1] - thresholds[startLevel - 1];
-            const levelBonus = notorietyBonuses[level - 1];
-            const saleCash = value * (1 + currentNotorietyBonus / 100);
-            rows.push("<tr class=\"" + (level === targetLevel ? "selected" : "") + "\"><td>Level " + level + "</td><td>" + money.format(value) + "</td><td>+" + levelBonus + "%</td><td>" + money.format(saleCash) + "</td></tr>");
+          let runningCash = 0;
+          for (const batch of batchesToLevel(startLevel, 5).batches) {
+            runningCash += batch.cash;
+            rows.push("<tr class=\"" + (batch.level === targetLevel ? "selected" : "") + "\"><td>Level " + batch.level + "</td><td>" + money.format(batch.loot) + "</td><td>+" + batch.bonus + "%</td><td>" + money.format(batch.cash) + "</td><td>" + money.format(runningCash) + "</td></tr>");
           }
         }
         output("ladder-body").innerHTML = rows.join("");
